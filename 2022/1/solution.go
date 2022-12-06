@@ -5,8 +5,30 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 )
+
+type topNCache struct {
+	n     int
+	cache []int
+}
+
+func newTopNCache(n int) *topNCache {
+	return &topNCache{
+		n:     n,
+		cache: make([]int, 0, n),
+	}
+}
+
+func (c *topNCache) push(value int) {
+	if len(c.cache) < c.n {
+		c.cache = append(c.cache, value)
+	} else if value > c.cache[0] {
+		c.cache[0] = value
+	}
+	sort.Ints(c.cache)
+}
 
 func readInput(lines chan string) {
 	file, err := os.Open("input.txt")
@@ -28,18 +50,24 @@ func readInput(lines chan string) {
 	}
 }
 
+func sumInts(ints []int) int {
+	var result int
+	for _, val := range ints {
+		result += val
+	}
+	return result
+}
+
 func main() {
 	lines := make(chan string)
 
 	go readInput(lines)
 
 	elfTotal := 0
-	largestSoFar := 0
+	largestSoFar := newTopNCache(3)
 	for l := range lines {
 		if l == "" {
-			if elfTotal > largestSoFar {
-				largestSoFar = elfTotal
-			}
+			largestSoFar.push(elfTotal)
 			elfTotal = 0
 			continue
 		}
@@ -51,5 +79,5 @@ func main() {
 		}
 	}
 
-	fmt.Println(largestSoFar)
+	fmt.Println(sumInts(largestSoFar.cache))
 }
