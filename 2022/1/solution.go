@@ -73,10 +73,10 @@ func main() {
 		}
 
 		calories, err := strconv.Atoi(l)
-		elfTotal = elfTotal + calories
 		if err != nil {
 			log.Fatal(err)
 		}
+		elfTotal = elfTotal + calories
 	}
 
 	fmt.Println(sumInts(largestSoFar.cache))
