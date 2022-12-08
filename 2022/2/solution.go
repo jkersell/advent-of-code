@@ -12,15 +12,15 @@ type Play int
 type Outcome int
 
 const (
-	Lose = 0
-	Draw = 3
-	Win  = 6
+	Draw = 0
+	Win  = 1
+	Lose = 2
 )
 
 const (
-	Rock     = 1
-	Paper    = 2
-	Scissors = 3
+	Rock     = 0
+	Paper    = 1
+	Scissors = 2
 )
 
 var p1Cipher = map[string]Play{
@@ -29,10 +29,22 @@ var p1Cipher = map[string]Play{
 	"C": Scissors,
 }
 
-var p2Cipher = map[string]Play{
-	"X": Rock,
-	"Y": Paper,
-	"Z": Scissors,
+var outcomeCipher = map[string]Outcome{
+	"X": Lose,
+	"Y": Draw,
+	"Z": Win,
+}
+
+var playScores = map[Play]int{
+	Rock:     1,
+	Paper:    2,
+	Scissors: 3,
+}
+
+var outcomeScores = map[Outcome]int{
+	Lose: 0,
+	Draw: 3,
+	Win:  6,
 }
 
 func beats(p1, p2 Play) Outcome {
@@ -51,6 +63,15 @@ func mod(a, b int) int {
 		r += b
 	}
 	return r
+}
+
+func myPlay(p1 Play, o Outcome) Play {
+	if o == Win {
+		return Play(mod(int(p1+1), 3))
+	} else if o == Lose {
+		return Play(mod(int(p1-1), 3))
+	}
+	return p1
 }
 
 func readInput() <-chan string {
@@ -78,11 +99,11 @@ func readInput() <-chan string {
 	return out
 }
 
-func decipherRound(line string) (Play, Play) {
+func decipherRound(line string) (Play, Outcome) {
 	plays := strings.Split(line, " ")
 	p1 := p1Cipher[plays[0]]
-	p2 := p2Cipher[plays[1]]
-	return p1, p2
+	o := outcomeCipher[plays[1]]
+	return p1, o
 }
 
 func main() {
@@ -90,9 +111,12 @@ func main() {
 
 	totalScore := 0
 	for l := range lines {
-		p1, p2 := decipherRound(l)
-		outcome := beats(p1, p2)
-		roundScore := int(p2) + int(outcome)
+		p1, outcome := decipherRound(l)
+		p2 := myPlay(p1, outcome)
+		if beats(p1, p2) != outcome {
+			fmt.Println("Wrong result")
+		}
+		roundScore := playScores[p2] + outcomeScores[outcome]
 		totalScore += roundScore
 	}
 	fmt.Println("Total score: ", totalScore)
