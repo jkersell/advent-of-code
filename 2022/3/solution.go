@@ -45,26 +45,30 @@ func priority(r rune) (int, error) {
 	}
 }
 
+func buildCache(s string) map[rune]bool {
+	cache := make(map[rune]bool)
+	for _, r := range s {
+		cache[r] = true
+	}
+	return cache
+}
+
 func main() {
 	total := 0
 	for l := range readInput() {
 		fmt.Println(l)
-		firstPocket := make(map[rune]bool)
 		mid := utf8.RuneCountInString(l) / 2
-		for i, r := range l {
-			if i < mid {
-				firstPocket[r] = true
-			} else {
-				_, ok := firstPocket[r]
-				if ok {
-					fmt.Println("Seeing an item again: ", string(r))
-					pri, err := priority(r)
-					if err != nil {
-						log.Fatal(err)
-					}
-					total += pri
-					break
+		firstPocket := buildCache(l[:mid])
+		for _, r := range l[mid:] {
+			_, ok := firstPocket[r]
+			if ok {
+				fmt.Println("Seeing an item again: ", string(r))
+				pri, err := priority(r)
+				if err != nil {
+					log.Fatal(err)
 				}
+				total += pri
+				break
 			}
 		}
 		fmt.Println("")
