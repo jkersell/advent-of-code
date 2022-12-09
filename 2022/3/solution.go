@@ -34,6 +34,51 @@ func readInput() <-chan string {
 	return out
 }
 
+func part1() {
+	total := 0
+	for l := range readInput() {
+		fmt.Println(l)
+		pri, err := checkRuck(l)
+		if err != nil {
+			log.Fatal(err)
+		}
+		total += pri
+		fmt.Println("")
+	}
+	fmt.Println(total)
+}
+
+func part2() {
+	total := 0
+	i := 0
+	ruck := make(map[rune]bool)
+	for l := range readInput() {
+		fmt.Println(l)
+		i++
+		if i == 1 {
+			ruck = buildCache(l)
+		}
+		ruck = intersect(ruck, l)
+		fmt.Println(ruck)
+		if i == 3 {
+			if len(ruck) > 1 {
+				log.Fatal("Expected one duplicate item but there were more")
+			} else if len(ruck) < 1 {
+				log.Fatal("Did not find a duplicated element")
+			}
+			for k, _ := range ruck {
+				pri, err := priority(k)
+				if err != nil {
+					log.Fatal(err)
+				}
+				total += pri
+			}
+			i = 0
+		}
+	}
+	fmt.Println(total)
+}
+
 func checkRuck(ruck string) (int, error) {
 	mid := utf8.RuneCountInString(ruck) / 2
 	firstPocket := buildCache(ruck[:mid])
@@ -84,15 +129,5 @@ func buildCache(s string) map[rune]bool {
 }
 
 func main() {
-	total := 0
-	for l := range readInput() {
-		fmt.Println(l)
-		pri, err := checkRuck(l)
-		if err != nil {
-			log.Fatal(err)
-		}
-		total += pri
-		fmt.Println("")
-	}
-	fmt.Println(total)
+	part2()
 }
