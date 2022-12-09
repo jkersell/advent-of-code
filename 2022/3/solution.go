@@ -34,6 +34,36 @@ func readInput() <-chan string {
 	return out
 }
 
+func checkRuck(ruck string) (int, error) {
+	mid := utf8.RuneCountInString(ruck) / 2
+	firstPocket := buildCache(ruck[:mid])
+	intersection := intersect(firstPocket, ruck[mid:])
+	if len(intersection) > 1 {
+		return 0, errors.New("Expected one duplicate item but there were more")
+	} else if len(intersection) < 1 {
+		return 0, errors.New("Did not find a duplicated element")
+	}
+	for k, _ := range intersection {
+		pri, err := priority(k)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return pri, nil
+	}
+	return 0, errors.New("Unexpected error while checking a ruck")
+}
+
+func intersect(cache map[rune]bool, ruck string) map[rune]bool {
+	intersection := make(map[rune]bool)
+	for _, r := range ruck {
+		_, ok := cache[r]
+		if ok {
+			intersection[r] = true
+		}
+	}
+	return intersection
+}
+
 func priority(r rune) (int, error) {
 	asInt := int(r)
 	if asInt >= 97 && asInt <= 123 {
@@ -57,20 +87,11 @@ func main() {
 	total := 0
 	for l := range readInput() {
 		fmt.Println(l)
-		mid := utf8.RuneCountInString(l) / 2
-		firstPocket := buildCache(l[:mid])
-		for _, r := range l[mid:] {
-			_, ok := firstPocket[r]
-			if ok {
-				fmt.Println("Seeing an item again: ", string(r))
-				pri, err := priority(r)
-				if err != nil {
-					log.Fatal(err)
-				}
-				total += pri
-				break
-			}
+		pri, err := checkRuck(l)
+		if err != nil {
+			log.Fatal(err)
 		}
+		total += pri
 		fmt.Println("")
 	}
 	fmt.Println(total)
