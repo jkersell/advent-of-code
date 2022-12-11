@@ -28,15 +28,26 @@ func (r *Range) contains(other *Range) bool {
 	return r.start <= other.start && r.end >= other.end
 }
 
-func countFullyContained(s *bufio.Scanner) int {
+func (r *Range) overlaps(other *Range) bool {
+	return r.contains(other) || other.contains(r) || r.overlap_lower(other) || r.overlap_upper(other)
+}
+
+func (r *Range) overlap_lower(other *Range) bool {
+	return r.start <= other.start && r.end >= other.start && r.end <= other.end
+}
+
+func (r *Range) overlap_upper(other *Range) bool {
+	return r.start >= other.start && r.start <= other.end && r.end >= other.end
+}
+
+func trueCounter() func(bool) int {
 	total := 0
-	for s.Scan() {
-		r1, r2 := parseLine(s.Text())
-		if r1.contains(r2) || r2.contains(r1) {
+	return func(p bool) int {
+		if p {
 			total++
 		}
+		return total
 	}
-	return total
 }
 
 func parseLine(l string) (*Range, *Range) {
@@ -71,8 +82,17 @@ func main() {
 
 	scanner := bufio.NewScanner(file)
 
-	total := countFullyContained(scanner)
-	fmt.Println("Total: ", total)
+	fullyContainedCounter := trueCounter()
+	fullyContainedTotal := 0
+	overlappingCounter := trueCounter()
+	overlappingTotal := 0
+	for scanner.Scan() {
+		r1, r2 := parseLine(scanner.Text())
+		fullyContainedTotal = fullyContainedCounter(r1.contains(r2) || r2.contains(r1))
+		overlappingTotal = overlappingCounter(r1.overlaps(r2))
+	}
+	fmt.Println("Total fully contained ranges: ", fullyContainedTotal)
+	fmt.Println("Total overlapping ranges: ", overlappingTotal)
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
