@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"regexp"
@@ -32,7 +33,7 @@ func (s Stack) peak() (rune, error) {
 	return s[l-1], nil
 }
 
-func runSimulation(scanner *bufio.Scanner) string {
+func runSimulation(scanner *bufio.Scanner, craneFunc func([]Stack, int, int, int)) string {
 	// [N]         [C]     [Z]
 	// [Q] [G]     [V]     [S]         [V]
 	// [L] [C]     [M]     [T]     [W] [L]
@@ -56,7 +57,7 @@ func runSimulation(scanner *bufio.Scanner) string {
 
 	for scanner.Scan() {
 		count, from, to := parseInstruction(scanner.Text())
-		execute(stacks, count, from, to)
+		craneFunc(stacks, count, from, to)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -87,7 +88,7 @@ func parseInstruction(l string) (int, int, int) {
 	return result[0], result[1], result[2]
 }
 
-func execute(stacks []Stack, count, from, to int) {
+func crateMover9000(stacks []Stack, count, from, to int) {
 	fromStack := stacks[from-1]
 	toStack := stacks[to-1]
 
@@ -99,6 +100,33 @@ func execute(stacks []Stack, count, from, to int) {
 		}
 		toStack = toStack.push(item)
 	}
+	stacks[from-1] = fromStack
+	stacks[to-1] = toStack
+}
+
+func crateMover9001(stacks []Stack, count, from, to int) {
+	fromStack := stacks[from-1]
+	toStack := stacks[to-1]
+	tmpStack := Stack{}
+
+	for i := 0; i < count; i++ {
+		s, item, err := fromStack.pop()
+		fromStack = s
+		if err != nil {
+			break
+		}
+		tmpStack = tmpStack.push(item)
+	}
+
+	for i := 0; i < count; i++ {
+		s, item, err := tmpStack.pop()
+		tmpStack = s
+		if err != nil {
+			break
+		}
+		toStack = toStack.push(item)
+	}
+
 	stacks[from-1] = fromStack
 	stacks[to-1] = toStack
 }
@@ -124,7 +152,12 @@ func main() {
 
 	scanner := bufio.NewScanner(file)
 
-	result := runSimulation(scanner)
+	result := runSimulation(scanner, crateMover9000)
+	fmt.Println("With the CrateMover9000 the order would have been: ", result, "\n")
 
-	fmt.Println(result)
+	file.Seek(0, io.SeekStart)
+	scanner = bufio.NewScanner(file)
+
+	result = runSimulation(scanner, crateMover9001)
+	fmt.Println("With the CrateMover9001 the order is: ", result, "\n")
 }
