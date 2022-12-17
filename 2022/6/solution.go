@@ -7,24 +7,22 @@ import (
 	"os"
 )
 
-func packetStartIndex(scanner *bufio.Scanner) int {
-	capacity := 4
+func uniqueCharsFinder(length int) func(r rune) (int, bool) {
 	window := make([]rune, 4)
 	cache := make(map[rune]bool)
 	i := 0
-	for scanner.Scan() {
-		r := []rune(scanner.Text())[0]
-		idx := i % capacity
+	return func(r rune) (int, bool) {
+		idx := i % length
 		to_evict := window[idx]
 		window[idx] = r
 		delete(cache, to_evict)
 		cache[r] = true
-		if len(cache) == capacity {
-			return i
+		if len(cache) == length {
+			return i, true
 		}
 		i++
+		return 0, false
 	}
-	return -1
 }
 
 func main() {
@@ -37,7 +35,15 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanRunes)
 
-	fmt.Println(packetStartIndex(scanner))
+	packetFinder := uniqueCharsFinder(4)
+
+	for scanner.Scan() {
+		r := []rune(scanner.Text())[0]
+		if i, ok := packetFinder(r); ok {
+			fmt.Println(i)
+			break
+		}
+	}
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
